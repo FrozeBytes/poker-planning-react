@@ -7,7 +7,7 @@ import Member from './components/Members';
 import User from './components/User';
 import Join from './components/Join';
 
-const ENDPOINT = "http://nodeapp2-env.eba-p4amm3fq.us-east-2.elasticbeanstalk.com/";
+const ENDPOINT = "https://nodeapp2-env.eba-p4amm3fq.us-east-2.elasticbeanstalk.com/";
 const { Header, Footer, Content } = Layout;
 
 const { Title } = Typography;
