@@ -1,5 +1,5 @@
 import React from "react";
-import { Form, Input, Button } from 'antd';
+import { Form, Input, Button, Checkbox } from 'antd';
 
 const layout = {
     labelCol: {
@@ -16,7 +16,7 @@ const layout = {
     },
   };
 
-function Join({ setName }) {
+function Join({ setName, setIsScrumMaster }) {
   return (
     <Form
       {...layout}
@@ -26,6 +26,7 @@ function Join({ setName }) {
       }}
       onFinish={(values) => {
         setName(values.name);
+        setIsScrumMaster(values.scrumMaster);
       }}
     >
       <Form.Item
@@ -40,19 +41,9 @@ function Join({ setName }) {
       >
         <Input />
       </Form.Item>
-
-      {/* <Form.Item
-        label="Username"
-        name="username"
-        rules={[
-          {
-            required: true,
-            message: 'Please input your username!',
-          },
-        ]}
-      >
-        <Input />
-      </Form.Item> */}
+      <Form.Item {...tailLayout} name="scrumMaster" valuePropName="checked">
+        <Checkbox>Scrum Master</Checkbox>
+      </Form.Item>
 
       <Form.Item {...tailLayout}>
         <Button type="primary" htmlType="submit">

@@ -7,7 +7,8 @@ import Member from './components/Members';
 import User from './components/User';
 import Join from './components/Join';
 
-const ENDPOINT = "https://nodeapp2-env.eba-p4amm3fq.us-east-2.elasticbeanstalk.com/";
+const ENDPOINT = "http://nodeapp2-env.eba-p4amm3fq.us-east-2.elasticbeanstalk.com/";
+// const ENDPOINT = "http://localhost:4001";
 const { Header, Footer, Content } = Layout;
 
 const { Title } = Typography;
@@ -15,8 +16,11 @@ const socket = socketIOClient(ENDPOINT);
 
 function App() {
   const [name, setName] = useState("");
+  const [isScrumMaster, setIsScrumMaster] = useState(false);
+  const [reveal, setReveal] = useState(false);
   const [estimates, setEstimates] = useState([]);
   const members = useRef([]);
+
   useEffect(() => {
     socket.on("estimates", (data) => {
       const index = members.current.findIndex( ({name}) => name === data.name );
@@ -28,6 +32,10 @@ function App() {
         setEstimates(currData => [...currData, data]);
       }
     });
+
+    socket.on("reveal", (data) => {
+      setReveal(data)
+    });
   }, []);
 
   return (
@@ -38,29 +46,26 @@ function App() {
       <Content style={{ padding: '0 20%', height:'calc(100vh - 130px)', overflowY: 'auto'}}>
         { name === "" && 
           <div style={{
-            height: '10em',
+            height: '20em',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+
           }}>
-            <Join setName={setName} />
+            <Join setName={setName} setIsScrumMaster={setIsScrumMaster} />
           </div>
         }
         { name !== "" &&
           <>
-            <UserStory userStory={'As a User, I want to test this app'}/>
-            <User name={name} socket={socket}/>
+            <UserStory userStory={'As a User, I want to use this app'}/>
+            <User name={name} socket={socket} isScrumMaster={isScrumMaster} isReveal={reveal} />
             <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between'}}>
                 {
-                  estimates.map((data, id) => <Member key={id} name={data.name} storyPoint={data.storyPoint} open={true}/>)
+                  estimates.map((data, id) => <Member key={id} name={data.name} storyPoint={data.storyPoint} open={reveal}/>)
                 }
             </div>
           </>
         }
-        
-        {/* <p>
-          It's <time dateTime={response}>{response}</time>
-        </p> */}
       </Content>
       <Footer style={{ textAlign: 'left'}}>Created by Franz Calbay © 2021</Footer>
     </Layout>
