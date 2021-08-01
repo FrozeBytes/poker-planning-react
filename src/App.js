@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { Layout } from 'antd';
 import socketIOClient from "socket.io-client";
 import { Typography } from 'antd';
-import UserStory from './components/UserStory';
 import Member from './components/Members';
 import User from './components/User';
 import Join from './components/Join';
+import { PieChart, Pie, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 
-const ENDPOINT = "http://nodeapp2-env.eba-p4amm3fq.us-east-2.elasticbeanstalk.com/";
-// const ENDPOINT = "http://localhost:4001";
+const ENDPOINT = "http://localhost:4001";
 const { Header, Footer, Content } = Layout;
 
 const { Title } = Typography;
@@ -19,9 +18,17 @@ function App() {
   const [isScrumMaster, setIsScrumMaster] = useState(false);
   const [reveal, setReveal] = useState(false);
   const [estimates, setEstimates] = useState([]);
+  const [pieChartData, setPieChartData] = useState([]);
   const members = useRef([]);
+  const currentSp = useRef('-');
 
   useEffect(() => {
+    socket.on("currentEstimates", (data) => {
+      console.dir(data);
+      members.current = data;
+      setEstimates([...members.current]);
+    });
+
     socket.on("estimates", (data) => {
       const index = members.current.findIndex( ({name}) => name === data.name );
       if (index !== -1) {
@@ -34,9 +41,32 @@ function App() {
     });
 
     socket.on("reveal", (data) => {
-      setReveal(data)
+      console.dir(members.current);
+      const newPieChartData = [];
+      [ ...members.current, { name, storyPoint: currentSp.current }].forEach((estimate) => {
+        const index = newPieChartData.findIndex(( {name}) => name === `SP ${estimate.storyPoint}`);
+        if (index !== -1) {
+          newPieChartData[index].value = newPieChartData[index].value + 1;
+        } else {
+          newPieChartData.push({ name: `SP ${estimate.storyPoint}`, value: 1 })
+        }
+      });
+      console.log('new pie chart data');
+      console.dir(newPieChartData);
+      setPieChartData([...newPieChartData])
+      setReveal(data);
+    });
+
+    socket.on("remove-user", (data) => {
+      members.current = members.current.filter((user) => user.name !== data)
+      console.dir(members.current.filter((user) => user.name !== data))
+      setEstimates([...members.current]);
     });
   }, []);
+
+  useEffect(() => {
+    console.dir(pieChartData);
+  }, [pieChartData])
 
   return (
     <Layout>
@@ -57,12 +87,30 @@ function App() {
         }
         { name !== "" &&
           <>
-            <UserStory userStory={'As a User, I want to use this app'}/>
-            <User name={name} socket={socket} isScrumMaster={isScrumMaster} isReveal={reveal} />
+            <br />
+            <User name={name} socket={socket} isScrumMaster={isScrumMaster} isReveal={reveal} currentSp={currentSp} />
+            {
+              reveal &&
+              <ResponsiveContainer width="100%" height="30%">
+                <PieChart width={200} height={200}>
+                  <Pie
+                    dataKey="value"
+                    isAnimationActive={false}
+                    data={pieChartData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    label
+                  />
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            }
             <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between'}}>
-                {
-                  estimates.map((data, id) => <Member key={id} name={data.name} storyPoint={data.storyPoint} open={reveal}/>)
-                }
+              {
+                estimates.map((data, id) => data.name === name ? null : <Member key={id} name={data.name} storyPoint={data.storyPoint} open={reveal}/>)
+              }
             </div>
           </>
         }
